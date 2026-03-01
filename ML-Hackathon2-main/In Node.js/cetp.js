@@ -5,23 +5,35 @@ const { startClient } = require('./client');
 
 yargs(hideBin(process.argv))
     .command(
-        'server [port]',
-        'Start the CETP receiver server',
+        'server',
+        'Start the CETP HTTPS receiver server',
         (yargs) => {
-            return yargs.positional('port', {
-                describe: 'Port to bind on',
-                default: 8888,
-                type: 'number'
-            });
+            return yargs
+                .option('port', {
+                    alias: 'p',
+                    describe: 'Port to bind on',
+                    default: 8888,
+                    type: 'number'
+                })
+                .option('pin', {
+                    describe: '6-digit pairing PIN',
+                    type: 'string',
+                    default: null
+                })
+                .option('host', {
+                    describe: 'Host to bind on',
+                    default: '0.0.0.0',
+                    type: 'string'
+                });
         },
         (argv) => {
-            console.log(`Starting Server on port ${argv.port}...`);
-            startServer(argv.port);
+            console.log(`Starting HTTPS Server on ${argv.host}:${argv.port}...`);
+            startServer(argv.port, argv.pin, argv.host);
         }
     )
     .command(
         'send <file>',
-        'Send a file or folder to a CETP server',
+        'Send a file or folder to a CETP HTTPS server',
         (yargs) => {
             yargs
                 .positional('file', {
@@ -39,17 +51,22 @@ yargs(hideBin(process.argv))
                     type: 'number',
                     description: 'Server port',
                     default: 8888
+                })
+                .option('pin', {
+                    type: 'string',
+                    description: '6-digit pairing PIN',
+                    default: null
                 });
         },
         async (argv) => {
             try {
-                await startClient(argv.file, argv.ip, argv.port);
+                await startClient(argv.file, argv.ip, argv.port, argv.pin);
             } catch (err) {
                 console.error("Transfer failed:", err.message);
                 process.exit(1);
             }
         }
-    ) // Add a default command or explicit instructions
+    )
     .demandCommand(1, 'You must provide a valid command (server or send)')
     .help()
     .parse();

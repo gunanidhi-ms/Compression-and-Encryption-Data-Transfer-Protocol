@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SecureProcessor",
-  description: "Local Malware Analysis & Encryption Tool",
+  title: "SecureProcessor — CETP HTTPS",
+  description: "Secure Compressed & Encrypted File Transfer over HTTPS",
 };
 
 export default function RootLayout({

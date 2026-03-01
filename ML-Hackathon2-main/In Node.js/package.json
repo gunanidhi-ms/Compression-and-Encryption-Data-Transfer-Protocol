@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "@mongodb-js/zstd": "^7.0.0",
+    "selfsigned": "^5.5.0",
     "yargs": "^18.0.0"
   }
 }
