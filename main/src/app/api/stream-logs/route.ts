@@ -7,8 +7,6 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const filePath = searchParams.get('filePath');
-  const targetHost = searchParams.get('targetHost') || 'localhost';
-  const targetPort = searchParams.get('targetPort') || '8888';
   const pinCode = searchParams.get('pinCode') || '';
 
   if (!filePath) {
@@ -39,7 +37,7 @@ export async function GET(request: NextRequest) {
         send('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         send(`  Target: ${path.basename(filePath)}\n\n`);
 
-        const malwareDir = path.resolve(process.cwd(), '../Malware_Detection-main');
+        const malwareDir = process.env.CETP_MALWARE_DIR || path.resolve(process.cwd(), '../Malware_Detection-main');
 
         const pythonProcess = spawn('python', ['malware_scanner.py', filePath], {
           cwd: malwareDir,
@@ -121,19 +119,23 @@ export async function GET(request: NextRequest) {
         send('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n');
 
         // =========================
-        // STEP 2: SECURE TRANSFER (HTTPS)
+        // STEP 2: SECURE TRANSFER (WebRTC)
         // =========================
-        send('🔒 SECURE TRANSFER (HTTPS)\n');
+        send('🔒 SECURE TRANSFER (WebRTC)\n');
         send('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        send(`  Target: ${targetHost}:${targetPort}\n`);
         if (pinCode) send(`  PIN:    ${pinCode}\n`);
         send('\n');
 
-        const nodeDir = path.resolve(process.cwd(), '../ML-Hackathon2-main/In Node.js');
+        const nodeDir = process.env.CETP_NODE_DIR || path.resolve(process.cwd(), '../ML-Hackathon2-main/In Node.js');
 
-        // client.js <filePath> <host> <port> [pin]
-        const clientArgs = ['client.js', filePath, targetHost, targetPort];
-        if (pinCode) clientArgs.push(pinCode);
+        // client.js <filePath> --pin <pin>
+        const clientArgs = ['client.js', filePath];
+        if (pinCode) clientArgs.push('--pin', pinCode);
+
+        const spawnEnv = { ...process.env };
+        if (process.env.CETP_NODE_PATH) {
+          spawnEnv.NODE_PATH = process.env.CETP_NODE_PATH;
+        }
 
         const clientProcess = spawn(
           'node',
@@ -141,6 +143,7 @@ export async function GET(request: NextRequest) {
           {
             cwd: nodeDir,
             shell: true,
+            env: spawnEnv
           }
         );
 

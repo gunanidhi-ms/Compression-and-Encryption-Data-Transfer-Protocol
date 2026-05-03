@@ -21,11 +21,8 @@ function getLocalIPs(): string[] {
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
-    const port = searchParams.get('port') || '8888';
     const pin = searchParams.get('pin') || '';
     const savePath = searchParams.get('savePath') || '';
-
-    const localIPs = getLocalIPs();
 
     const encoder = new TextEncoder();
 
@@ -36,31 +33,29 @@ export async function GET(request: NextRequest) {
             };
 
             try {
-                const nodeDir = path.resolve(process.cwd(), '../ML-Hackathon2-main/In Node.js');
+                const nodeDir = process.env.CETP_NODE_DIR || path.resolve(process.cwd(), '../ML-Hackathon2-main/In Node.js');
 
-                // Send connection info
-                send(`__PORT__:${port}\n`);
-                send(`__IPS__:${localIPs.join(',')}\n`);
-
-                send(`\n📡 Starting CETP Receiver...\n`);
-                send(`📍 Port: ${port}\n`);
+                send(`\n📡 Starting CETP WebRTC Receiver...\n`);
                 if (pin) {
                     send(`🔑 PIN set: ${pin}\n`);
-                }
-                if (localIPs.length > 0) {
-                    send(`🌐 Local IP(s): ${localIPs.join(', ')}\n`);
                 }
                 if (savePath) {
                     send(`📁 Save location: ${savePath}\n`);
                 }
-                send(`⏳ Waiting for sender connection...\n\n`);
+                send(`⏳ Connecting to global network...\n\n`);
 
-                // Build args — quote the savePath to handle spaces
-                const serverArgs: string[] = [port];
-                if (pin) serverArgs.push(pin);
-                else serverArgs.push('');
+                const serverArgs: string[] = [];
+                if (pin) {
+                    serverArgs.push('--pin', pin);
+                }
+                if (savePath) {
+                    serverArgs.push('"' + savePath + '"');
+                }
 
-                if (savePath) serverArgs.push(`"${savePath}"`);
+                const spawnEnv = { ...process.env };
+                if (process.env.CETP_NODE_PATH) {
+                    spawnEnv.NODE_PATH = process.env.CETP_NODE_PATH;
+                }
 
                 const serverProcess = spawn(
                     'node',
@@ -68,6 +63,7 @@ export async function GET(request: NextRequest) {
                     {
                         cwd: nodeDir,
                         shell: true,
+                        env: spawnEnv
                     }
                 );
 

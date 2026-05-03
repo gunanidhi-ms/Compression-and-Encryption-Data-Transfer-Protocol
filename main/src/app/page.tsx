@@ -14,8 +14,6 @@ export default function Home() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragActive, setIsDragActive] = useState(false);
   const [senderPin, setSenderPin] = useState("");
-  const [targetHost, setTargetHost] = useState("");
-  const [targetPort, setTargetPort] = useState("8888");
   const logEndRef = useRef<HTMLDivElement>(null);
 
   // ===== RECEIVER STATE =====
@@ -23,8 +21,6 @@ export default function Home() {
   const [isReceiving, setIsReceiving] = useState(false);
   const [receiverPinInput, setReceiverPinInput] = useState("");
   const [savePath, setSavePath] = useState("");
-  const [localIPs, setLocalIPs] = useState<string[]>([]);
-  const [receiverPort, setReceiverPort] = useState("8888");
   const receiverLogEndRef = useRef<HTMLDivElement>(null);
 
   // ===== GENERATE PIN =====
@@ -62,10 +58,6 @@ export default function Home() {
 
   const startSenderProcess = async () => {
     if (files.length === 0) return;
-    if (!targetHost.trim()) {
-      setLogs(["❌ Please enter the receiver's IP address."]);
-      return;
-    }
 
     setIsProcessing(true);
     setUploadProgress(10);
@@ -84,8 +76,6 @@ export default function Home() {
 
       const params = new URLSearchParams({
         filePath: rootPath,
-        targetHost: targetHost.trim(),
-        targetPort: targetPort.trim() || "8888",
         pinCode: senderPin,
       });
 
@@ -110,6 +100,17 @@ export default function Home() {
     }
   };
 
+  const stopSenderProcess = async () => {
+    try {
+      await fetch("/api/stop-sender", { method: "POST" });
+      setLogs((prev) => [...prev, "🛑 Sender stopped and processes aborted."]);
+      setIsProcessing(false);
+      setUploadProgress(0);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   // ===== RECEIVER HANDLERS =====
   const browseSaveFolder = async () => {
     if (isReceiving) return;
@@ -127,12 +128,10 @@ export default function Home() {
     }
 
     setIsReceiving(true);
-    setReceiverLogs(["🔒 Initializing CETP HTTPS Receiver..."]);
-    setLocalIPs([]);
+    setReceiverLogs(["🔒 Initializing CETP WebRTC Receiver..."]);
 
     try {
       const params = new URLSearchParams({
-        port: "8888",
         pin: receiverPinInput.trim(),
         savePath: savePath.trim(),
       });
@@ -149,13 +148,7 @@ export default function Home() {
         const text = decoder.decode(value);
 
         for (const line of text.split("\n")) {
-          if (line.startsWith("__PORT__:")) {
-            setReceiverPort(line.replace("__PORT__:", "").trim());
-          } else if (line.startsWith("__IPS__:")) {
-            setLocalIPs(line.replace("__IPS__:", "").trim().split(",").filter(Boolean));
-          } else {
-            setReceiverLogs((prev) => [...prev, line]);
-          }
+          setReceiverLogs((prev) => [...prev, line]);
         }
       }
     } catch (error: any) {
@@ -201,8 +194,8 @@ export default function Home() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 font-mono">HTTPS</span>
-            <span className="text-xs font-mono text-neutral-500">v4.0</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-mono">WebRTC</span>
+            <span className="text-xs font-mono text-neutral-500">v5.0</span>
           </div>
         </div>
       </header>
@@ -214,9 +207,9 @@ export default function Home() {
             Analyze. Compress. Encrypt.
           </h2>
           <p className="text-neutral-400 text-lg">
-            Military-grade encryption with HTTPS transport.
+            Military-grade encryption with WebRTC NAT traversal.
             <br />
-            Secure transfer to any device, any network.
+            Secure transfer to any device across any network.
           </p>
         </section>
 
@@ -314,29 +307,7 @@ export default function Home() {
               </div>
             </section>
 
-            {/* Step 2: Connection Settings */}
-            <section className="max-w-3xl mx-auto">
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/30 p-6 space-y-6">
-                <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                  Receiver Connection
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-neutral-400 uppercase tracking-wide">Receiver IP / Hostname</label>
-                    <input type="text" value={targetHost} onChange={(e) => setTargetHost(e.target.value)} placeholder="e.g. 192.168.1.5 or public IP" disabled={isProcessing}
-                      className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-neutral-400 uppercase tracking-wide">Port</label>
-                    <input type="text" value={targetPort} onChange={(e) => setTargetPort(e.target.value)} placeholder="8888" disabled={isProcessing}
-                      className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all" />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Step 3: Sharing PIN */}
+            {/* Step 2: Sharing PIN */}
             <section className="max-w-3xl mx-auto">
               <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-indigo-950/50 to-purple-950/30 p-8 text-center space-y-5">
                 <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
@@ -358,23 +329,22 @@ export default function Home() {
               </div>
             </section>
 
-            {/* Start Button */}
+            {/* Start / Stop Button */}
             <section className="max-w-3xl mx-auto flex justify-center">
               <button
-                onClick={(e) => { e.stopPropagation(); startSenderProcess(); }}
-                disabled={isProcessing || files.length === 0}
+                onClick={(e) => { e.stopPropagation(); isProcessing ? stopSenderProcess() : startSenderProcess(); }}
+                disabled={!isProcessing && files.length === 0}
                 className={`h-14 px-10 rounded-full font-bold text-sm tracking-wide transition-all shadow-xl flex items-center gap-3
-                  ${isProcessing || files.length === 0
+                  ${(!isProcessing && files.length === 0)
                     ? "bg-neutral-800 text-neutral-500 cursor-not-allowed border border-neutral-700"
-                    : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 hover:scale-105 active:scale-95"}`}
+                    : isProcessing
+                      ? "bg-red-600/20 border-2 border-red-500 text-red-400 hover:bg-red-600/30 hover:scale-105 active:scale-95 shadow-red-500/10"
+                      : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 hover:scale-105 active:scale-95"}`}
               >
                 {isProcessing ? (
                   <>
-                    <svg className="animate-spin h-5 w-5 text-indigo-200" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    PROCESSING...
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+                    STOP SENDER
                   </>
                 ) : (
                   <span>START SECURE PROTOCOL</span>
@@ -473,13 +443,6 @@ export default function Home() {
                       <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> START RECEIVER</>
                     )}
                   </button>
-                  {isReceiving && localIPs.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {localIPs.map((ip, i) => (
-                        <span key={i} className="bg-neutral-900/60 rounded-lg px-3 py-1.5 border border-neutral-800 text-neutral-300 font-mono text-xs">{ip}:{receiverPort}</span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             </section>

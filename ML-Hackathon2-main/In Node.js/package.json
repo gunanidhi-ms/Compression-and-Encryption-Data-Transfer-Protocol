@@ -6,7 +6,8 @@
   },
   "dependencies": {
     "@mongodb-js/zstd": "^7.0.0",
-    "selfsigned": "^5.5.0",
+    "node-datachannel": "^0.32.1",
+    "ws": "^8.19.0",
     "yargs": "^18.0.0"
   }
 }

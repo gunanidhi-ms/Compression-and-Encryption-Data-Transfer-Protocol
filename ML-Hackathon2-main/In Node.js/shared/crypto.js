@@ -37,13 +37,13 @@ function deriveSessionKey(
             publicKey: peerPublicKey
         });
 
-    return crypto.hkdfSync(
+    return Buffer.from(crypto.hkdfSync(
         "sha256",
         sharedSecret,
-        Buffer.alloc(0),  // <-- FIX
+        Buffer.alloc(0),
         Buffer.from("file-transfer-protocol-v1"),
         32
-    );
+    ));
 
 }
 

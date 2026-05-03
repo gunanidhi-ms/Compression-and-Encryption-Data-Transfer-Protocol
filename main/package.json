@@ -2,16 +2,64 @@
   "name": "main",
   "version": "0.1.0",
   "private": true,
+  "main": "main.js",
+  "author": "CETP",
+  "description": "Secure Data Transfer Protocol GUI",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "electron": "electron .",
+    "pack": "next build && electron-builder --dir",
+    "dist": "next build && electron-builder"
+  },
+  "build": {
+    "appId": "com.cetp.app",
+    "productName": "SecureProcessor",
+    "asar": false,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "package-lock.json",
+      ".next/**/*",
+      "!.next/cache/**/*",
+      "public/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../ML-Hackathon2-main/In Node.js",
+        "to": "In Node.js",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../ML-Hackathon2-main/In Node.js/node_modules",
+        "to": "In Node.js/node_modules"
+      },
+      {
+        "from": "../Malware_Detection-main",
+        "to": "Malware_Detection-main",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
   },
   "dependencies": {
+    "@mongodb-js/zstd": "^7.0.0",
     "next": "16.1.6",
+    "node-datachannel": "^0.32.1",
+    "peerjs": "^1.5.5",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "ws": "^8.19.0",
+    "yargs": "^18.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -19,6 +67,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "concurrently": "^9.2.1",
+    "electron": "^40.8.0",
+    "electron-builder": "^26.8.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
